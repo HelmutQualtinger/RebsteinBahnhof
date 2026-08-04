@@ -36,11 +36,17 @@
             <circle class="clock-hub" cx="50" cy="50" r="2.3" />
           </svg>
           <div class="brand-text">
-            <h1>Rebstein&#8209;Marbach</h1>
+            <h1 id="stationName">Rebstein&#8209;Marbach</h1>
             <p class="subtitle">Live Bahnhoftafel &middot; nächste 24&nbsp;Stunden</p>
           </div>
         </div>
-        <div class="clock-digital" id="clockDigital">--:--:--</div>
+        <div class="header-right">
+          <div class="clock-digital" id="clockDigital">--:--:--</div>
+          <label class="station-picker">
+            <span class="station-picker-label">Bahnhof (Kt.&nbsp;SG)</span>
+            <select id="stationSelect" aria-label="Bahnhof wählen"></select>
+          </label>
+        </div>
       </div>
 
       <nav class="tabs" role="tablist">

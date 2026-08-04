@@ -1,16 +1,93 @@
 'use strict';
 
 const API = 'https://transport.opendata.ch/v1';
-const STATION_ID = '8506318';
-const STATION_NAME = 'Rebstein-Marbach';
+const DEFAULT_STATION_ID = '8506318';
 const HORIZON_HOURS = 24;
 const REFRESH_MS = 30000;
 const CACHE_TTL_MS = 25000;
+const STATION_STORAGE_KEY = 'rebsteinBahnhof.stationId';
+
+// All SBB/Appenzell-Bahnen train stations in Kanton St. Gallen. Built by harvesting
+// real stationboard passLists from the region's hub stations and keeping only the
+// stops that fall inside the official St. Gallen canton boundary (swisstopo
+// swissboundaries3d), verified by point-in-polygon test — not a hand-typed guess.
+const STATIONS = [
+  { id: '8506319', name: 'Altstätten SG' },
+  { id: '8506211', name: 'Arnegg' },
+  { id: '8506316', name: 'Au SG' },
+  { id: '8509004', name: 'Bad Ragaz' },
+  { id: '8506205', name: 'Bazenheid' },
+  { id: '8503118', name: 'Benken SG' },
+  { id: '8503113', name: 'Blumenau' },
+  { id: '8506181', name: 'Bronschhofen' },
+  { id: '8506188', name: 'Bronschhofen AMP' },
+  { id: '8506294', name: 'Brunnadern-Neckertal' },
+  { id: '8509404', name: 'Buchs SG' },
+  { id: '8506203', name: 'Bütschwil' },
+  { id: '8506292', name: 'Degersheim' },
+  { id: '8506202', name: 'Dietfurt' },
+  { id: '8506297', name: 'Ebnat-Kappel' },
+  { id: '8506209', name: 'Flawil' },
+  { id: '8509413', name: 'Flums' },
+  { id: '8506305', name: 'Goldach' },
+  { id: '8506210', name: 'Gossau SG' },
+  { id: '8506317', name: 'Heerbrugg' },
+  { id: '8503120', name: 'Jona' },
+  { id: '8503117', name: 'Kaltbrunn' },
+  { id: '8503112', name: 'Kempraten' },
+  { id: '8506298', name: 'Krummenau' },
+  { id: '8506201', name: 'Lichtensteig' },
+  { id: '8506204', name: 'Lütisburg' },
+  { id: '8509412', name: 'Mels' },
+  { id: '8506293', name: 'Mogelsberg' },
+  { id: '8506396', name: 'Muolen' },
+  { id: '8509417', name: 'Murg' },
+  { id: '8506304', name: 'Mörschwil' },
+  { id: '8506299', name: 'Nesslau-Neu St. Johann' },
+  { id: '8509400', name: 'Oberriet SG' },
+  { id: '8503110', name: 'Rapperswil SG' },
+  { id: '8506318', name: 'Rebstein-Marbach' },
+  { id: '8506313', name: 'Rheineck' },
+  { id: '8506311', name: 'Rorschach' },
+  { id: '8506322', name: 'Rorschach Stadt' },
+  { id: '8509405', name: 'Räfis-Burgerau' },
+  { id: '8509401', name: 'Rüthi SG' },
+  { id: '8509402', name: 'Salez-Sennwald' },
+  { id: '8509411', name: 'Sargans' },
+  { id: '8503115', name: 'Schmerikon' },
+  { id: '8506362', name: 'Schwarzer Bären' },
+  { id: '8503119', name: 'Schänis' },
+  { id: '8509406', name: 'Sevelen' },
+  { id: '8506302', name: 'St. Gallen' },
+  { id: '8518100', name: 'St. Gallen Birnbäumen' },
+  { id: '8506301', name: 'St. Gallen Bruggen' },
+  { id: '8519306', name: 'St. Gallen Güterbahnhof' },
+  { id: '8506392', name: 'St. Gallen Haggen' },
+  { id: '8506270', name: 'St. Gallen Marktplatz' },
+  { id: '8506361', name: 'St. Gallen Notkersegg' },
+  { id: '8506371', name: 'St. Gallen Riethüsli' },
+  { id: '8506359', name: 'St. Gallen Schülerhaus' },
+  { id: '8506358', name: 'St. Gallen Spisertor' },
+  { id: '8506303', name: 'St. Gallen St. Fiden' },
+  { id: '8506300', name: 'St. Gallen Winkeln' },
+  { id: '8506314', name: 'St. Margrethen SG' },
+  { id: '8506312', name: 'Staad SG' },
+  { id: '8509416', name: 'Unterterzen' },
+  { id: '8503116', name: 'Uznach' },
+  { id: '8506208', name: 'Uzwil' },
+  { id: '8509414', name: 'Walenstadt' },
+  { id: '8506200', name: 'Wattwil' },
+  { id: '8506206', name: 'Wil SG' },
+  { id: '8506393', name: 'Wittenbach' },
+  { id: '8503225', name: 'Ziegelbrücke' },
+];
 
 const boardEl = document.getElementById('board');
 const clockDigitalEl = document.getElementById('clockDigital');
 const updatedAtEl = document.getElementById('updatedAt');
 const tabs = [...document.querySelectorAll('.tab')];
+const stationSelectEl = document.getElementById('stationSelect');
+const stationNameEl = document.getElementById('stationName');
 
 const modalBackdrop = document.getElementById('modalBackdrop');
 const modalClose = document.getElementById('modalClose');
@@ -19,13 +96,19 @@ const modalTitle = document.getElementById('modalTitle');
 const modalSubtitle = document.getElementById('modalSubtitle');
 const stopList = document.getElementById('stopList');
 
+function findStation(id) {
+  return STATIONS.find((s) => s.id === id) || STATIONS.find((s) => s.id === DEFAULT_STATION_ID);
+}
+
+let currentStation = findStation(localStorage.getItem(STATION_STORAGE_KEY) || DEFAULT_STATION_ID);
 let currentMode = 'departure';
 let currentEntries = [];
 let refreshTimer = null;
 
-// In-memory cache of stationboard results, keyed by mode ('departure' | 'arrival').
-// Avoids refetching the API on every tab switch; a background refresh keeps it warm.
+// In-memory cache of stationboard results, keyed by "stationId|mode".
+// Avoids refetching the API on every tab/station switch; a background refresh keeps it warm.
 const boardCache = new Map();
+const cacheKey = (stationId, mode) => `${stationId}|${mode}`;
 
 /* ---------- time helpers ---------- */
 
@@ -93,8 +176,8 @@ function tickClock() {
 
 /* ---------- API ---------- */
 
-async function fetchPage(mode, datetime) {
-  const params = new URLSearchParams({ id: STATION_ID, type: mode, limit: '200' });
+async function fetchPage(stationId, mode, datetime) {
+  const params = new URLSearchParams({ id: stationId, type: mode, limit: '200' });
   if (datetime) params.set('datetime', datetime);
   const res = await fetch(`${API}/stationboard?${params.toString()}`);
   if (!res.ok) throw new Error(`API-Fehler (${res.status})`);
@@ -111,7 +194,7 @@ function toApiDatetime(date) {
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
-async function loadBoard(mode) {
+async function loadBoard(stationId, mode) {
   const now = new Date();
   const horizonTs = now.getTime() + HORIZON_HOURS * 3600 * 1000;
 
@@ -121,7 +204,7 @@ async function loadBoard(mode) {
   let guard = 0;
 
   while (guard++ < 6) {
-    const page = await fetchPage(mode, cursor);
+    const page = await fetchPage(stationId, mode, cursor);
     if (page.length === 0) break;
 
     let reachedHorizon = false;
@@ -214,13 +297,13 @@ function openModal(entry) {
   modalBadge.textContent = `${entry.category}${entry.number || ''}`;
   modalBadge.className = `modal-badge ${categoryClass(entry.category)}`;
   modalTitle.textContent = `${entry.category}${entry.number || ''} → ${entry.to || ''}`;
-  modalSubtitle.textContent = `${entry.operator || ''} · ab ${STATION_NAME} ${hhmm(s.departure || s.arrival)}${s.platform ? ` · Gleis ${s.platform}` : ''}`;
+  modalSubtitle.textContent = `${entry.operator || ''} · ab ${currentStation.name} ${hhmm(s.departure || s.arrival)}${s.platform ? ` · Gleis ${s.platform}` : ''}`;
 
   stopList.innerHTML = '';
 
   const origin = document.createElement('li');
   origin.className = 'stop origin';
-  origin.innerHTML = `<span class="stop-name">${STATION_NAME}</span><span class="stop-time">${hhmm(s.departure || s.arrival)}</span>`;
+  origin.innerHTML = `<span class="stop-name">${currentStation.name}</span><span class="stop-time">${hhmm(s.departure || s.arrival)}</span>`;
   stopList.appendChild(origin);
 
   const stops = (entry.passList || []).filter((p) => p.station && p.station.name);
@@ -254,18 +337,18 @@ document.addEventListener('keydown', (e) => {
 
 /* ---------- board loading orchestration ---------- */
 
-async function refresh(mode, { silent = false } = {}) {
+async function refresh(stationId, mode, { silent = false } = {}) {
   if (!silent) setStatus(`Lade ${mode === 'departure' ? 'Abfahrten' : 'Ankünfte'}…`);
   try {
-    const entries = await loadBoard(mode);
+    const entries = await loadBoard(stationId, mode);
     const fetchedAt = Date.now();
-    boardCache.set(mode, { entries, fetchedAt });
-    if (mode === currentMode) {
+    boardCache.set(cacheKey(stationId, mode), { entries, fetchedAt });
+    if (stationId === currentStation.id && mode === currentMode) {
       renderBoard(entries);
       updatedAtEl.textContent = `Aktualisiert um ${swissTimeString(new Date(fetchedAt))}`;
     }
   } catch (err) {
-    if (mode === currentMode && !boardCache.has(mode)) {
+    if (stationId === currentStation.id && mode === currentMode && !boardCache.has(cacheKey(stationId, mode))) {
       setStatus(`Verbindung zur SBB Open Data API fehlgeschlagen: ${err.message}`, true);
     }
   }
@@ -279,18 +362,35 @@ function selectTab(mode) {
     t.setAttribute('aria-selected', String(active));
   });
 
-  const cached = boardCache.get(mode);
+  const key = cacheKey(currentStation.id, mode);
+  const cached = boardCache.get(key);
   if (cached) {
     // Serve instantly from the in-memory cache, then silently revalidate if stale.
     renderBoard(cached.entries);
     updatedAtEl.textContent = `Aktualisiert um ${swissTimeString(new Date(cached.fetchedAt))}`;
-    if (Date.now() - cached.fetchedAt > CACHE_TTL_MS) refresh(mode, { silent: true });
+    if (Date.now() - cached.fetchedAt > CACHE_TTL_MS) refresh(currentStation.id, mode, { silent: true });
   } else {
-    refresh(mode);
+    refresh(currentStation.id, mode);
   }
 }
 
+function selectStation(stationId) {
+  currentStation = findStation(stationId);
+  localStorage.setItem(STATION_STORAGE_KEY, currentStation.id);
+  stationNameEl.textContent = currentStation.name;
+  document.title = `${currentStation.name} — Bahnhoftafel`;
+  selectTab(currentMode);
+}
+
 tabs.forEach((t) => t.addEventListener('click', () => selectTab(t.dataset.mode)));
+
+function populateStationSelect() {
+  const sorted = [...STATIONS].sort((a, b) => a.name.localeCompare(b.name, 'de-CH'));
+  stationSelectEl.innerHTML = sorted
+    .map((s) => `<option value="${s.id}"${s.id === currentStation.id ? ' selected' : ''}>${s.name}</option>`)
+    .join('');
+  stationSelectEl.addEventListener('change', () => selectStation(stationSelectEl.value));
+}
 
 /* ---------- init ---------- */
 
@@ -298,5 +398,9 @@ buildClockTicks();
 tickClock();
 setInterval(tickClock, 1000);
 
+populateStationSelect();
+stationNameEl.textContent = currentStation.name;
+document.title = `${currentStation.name} — Bahnhoftafel`;
+
 selectTab('departure');
-refreshTimer = setInterval(() => refresh(currentMode, { silent: true }), REFRESH_MS);
+refreshTimer = setInterval(() => refresh(currentStation.id, currentMode, { silent: true }), REFRESH_MS);

@@ -72,11 +72,28 @@
     </main>
 
     <footer class="board-footer">
-      <span id="updatedAt">&nbsp;</span>
-      <span class="footer-sep">&middot;</span>
-      <span>Daten: <a href="https://transport.opendata.ch" target="_blank" rel="noopener">transport.opendata.ch</a> (SBB&nbsp;Open&nbsp;Data)</span>
-      <span class="footer-sep">&middot;</span>
-      <span>Auto&#8209;Update alle 30&nbsp;s</span>
+      <div class="footer-meta">
+        <span id="updatedAt">&nbsp;</span>
+        <span class="footer-sep">&middot;</span>
+        <span>Daten: <a href="https://transport.opendata.ch" target="_blank" rel="noopener">transport.opendata.ch</a> (SBB&nbsp;Open&nbsp;Data)</span>
+        <span class="footer-sep">&middot;</span>
+        <span>Auto&#8209;Update alle 30&nbsp;s</span>
+      </div>
+      <nav class="share-row" aria-label="Seite teilen">
+        <span class="share-label">Teilen</span>
+        <a id="shareWhatsapp" class="share-btn" target="_blank" rel="noopener" aria-label="Auf WhatsApp teilen" title="Auf WhatsApp teilen">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.29-1.39a9.9 9.9 0 0 0 4.7 1.2h.01c5.46 0 9.91-4.45 9.91-9.9 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m0 1.67a8.2 8.2 0 0 1 5.83 2.42 8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.25 8.23a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.18 8.18 0 0 1-1.26-4.37c0-4.54 3.7-8.23 8.26-8.23m-4.49 4.7c-.16 0-.43.06-.65.31-.22.25-.86.84-.86 2.04 0 1.2.88 2.37 1 2.53.13.17 1.72 2.7 4.26 3.72 2.1.85 2.53.68 2.99.64.46-.04 1.48-.6 1.69-1.19.21-.58.21-1.08.15-1.19-.06-.1-.23-.17-.48-.29-.25-.13-1.48-.73-1.71-.81-.23-.08-.4-.13-.56.13-.17.25-.65.81-.79.98-.15.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.44.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.44-.06-.13-.56-1.37-.78-1.87-.2-.48-.41-.42-.56-.43-.15-.01-.31-.01-.48-.01Z"/></svg>
+        </a>
+        <a id="shareX" class="share-btn" target="_blank" rel="noopener" aria-label="Auf X teilen" title="Auf X teilen">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.3 10.53 20.8 2h-2.05l-6.5 7.4L6.98 2H2l7.87 11.42L2 22h2.05l6.87-7.82L16.98 22H22l-8.7-11.47Zm-2.44 2.78-.8-1.13L4.7 3.5h2.6l5.1 7.24.8 1.13 6.71 9.53h-2.6l-5.4-7.09Z"/></svg>
+        </a>
+        <a id="shareFacebook" class="share-btn" target="_blank" rel="noopener" aria-label="Auf Facebook teilen" title="Auf Facebook teilen">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.9h2.54V9.85c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.9h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94Z"/></svg>
+        </a>
+        <a id="shareMail" class="share-btn" aria-label="Per E-Mail teilen" title="Per E-Mail teilen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.2"/><path d="m3.2 5.8 8.8 7 8.8-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </nav>
     </footer>
   </div>
 

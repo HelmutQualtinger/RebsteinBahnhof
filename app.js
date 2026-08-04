@@ -88,6 +88,12 @@ const updatedAtEl = document.getElementById('updatedAt');
 const tabs = [...document.querySelectorAll('.tab')];
 const stationSelectEl = document.getElementById('stationSelect');
 const stationNameEl = document.getElementById('stationName');
+const shareLinks = {
+  whatsapp: document.getElementById('shareWhatsapp'),
+  x: document.getElementById('shareX'),
+  facebook: document.getElementById('shareFacebook'),
+  mail: document.getElementById('shareMail'),
+};
 
 const modalBackdrop = document.getElementById('modalBackdrop');
 const modalClose = document.getElementById('modalClose');
@@ -100,7 +106,26 @@ function findStation(id) {
   return STATIONS.find((s) => s.id === id) || STATIONS.find((s) => s.id === DEFAULT_STATION_ID);
 }
 
-let currentStation = findStation(localStorage.getItem(STATION_STORAGE_KEY) || DEFAULT_STATION_ID);
+function shareUrlFor(stationId) {
+  const url = new URL(location.href);
+  url.search = '';
+  url.searchParams.set('station', stationId);
+  return url.toString();
+}
+
+function updateShareLinks() {
+  const url = shareUrlFor(currentStation.id);
+  const text = `${currentStation.name} – Live Bahnhoftafel`;
+  shareLinks.whatsapp.href = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
+  shareLinks.x.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  shareLinks.facebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  shareLinks.mail.href = `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`;
+}
+
+const initialStationId = new URLSearchParams(location.search).get('station')
+  || localStorage.getItem(STATION_STORAGE_KEY)
+  || DEFAULT_STATION_ID;
+let currentStation = findStation(initialStationId);
 let currentMode = 'departure';
 let currentEntries = [];
 let refreshTimer = null;
@@ -377,8 +402,10 @@ function selectTab(mode) {
 function selectStation(stationId) {
   currentStation = findStation(stationId);
   localStorage.setItem(STATION_STORAGE_KEY, currentStation.id);
+  history.replaceState({}, '', shareUrlFor(currentStation.id));
   stationNameEl.textContent = currentStation.name;
   document.title = `${currentStation.name} — Bahnhoftafel`;
+  updateShareLinks();
   selectTab(currentMode);
 }
 
@@ -401,6 +428,8 @@ setInterval(tickClock, 1000);
 populateStationSelect();
 stationNameEl.textContent = currentStation.name;
 document.title = `${currentStation.name} — Bahnhoftafel`;
+history.replaceState({}, '', shareUrlFor(currentStation.id));
+updateShareLinks();
 
 selectTab('departure');
 refreshTimer = setInterval(() => refresh(currentStation.id, currentMode, { silent: true }), REFRESH_MS);

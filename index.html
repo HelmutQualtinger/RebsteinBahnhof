@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rebstein-Marbach — Bahnhoftafel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23EB0000%22/><circle cx=%2250%22 cy=%2250%22 r=%2232%22 fill=%22white%22/><rect x=%2247%22 y=%2222%22 width=%226%22 height=%2230%22 fill=%22%23111%22/><rect x=%2250%22 y=%2250%22 width=%2222%22 height=%226%22 fill=%22%23111%22/></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;600;800&family=Big+Shoulders+Display:wght@600;800&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="board-frame">
+    <header class="board-header">
+      <div class="header-top">
+        <div class="brand">
+          <svg class="sbb-clock" id="sbbClock" viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+              <linearGradient id="bezelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f3f4f0" />
+                <stop offset="45%" stop-color="#9a9d95" />
+                <stop offset="55%" stop-color="#8b8e85" />
+                <stop offset="100%" stop-color="#e8e9e4" />
+              </linearGradient>
+            </defs>
+            <circle class="clock-face" cx="50" cy="50" r="47" />
+            <g id="clockTicks"></g>
+            <g id="handHour"><polygon points="-1.8,7 -3.4,-24 3.4,-24 1.8,7" /></g>
+            <g id="handMinute"><polygon points="-1.3,8 -2.7,-35 2.7,-35 1.3,8" /></g>
+            <g id="handSecond">
+              <line x1="0" y1="15" x2="0" y2="-40" />
+              <circle cx="0" cy="14.5" r="5.3" />
+            </g>
+            <circle class="clock-hub" cx="50" cy="50" r="2.3" />
+          </svg>
+          <div class="brand-text">
+            <h1>Rebstein&#8209;Marbach</h1>
+            <p class="subtitle">Live Bahnhoftafel &middot; nächste 24&nbsp;Stunden</p>
+          </div>
+        </div>
+        <div class="clock-digital" id="clockDigital">--:--:--</div>
+      </div>
+
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-mode="departure" role="tab" aria-selected="true">
+          <span class="tab-arrow">&#8594;</span> Abfahrt
+        </button>
+        <button class="tab" data-mode="arrival" role="tab" aria-selected="false">
+          <span class="tab-arrow">&#8592;</span> Ankunft
+        </button>
+      </nav>
+    </header>
+
+    <div class="board-columns" id="boardColumns" role="row">
+      <span class="col-time">Zeit</span>
+      <span class="col-line">Zug</span>
+      <span class="col-dest">Richtung</span>
+      <span class="col-platform">Gleis</span>
+      <span class="col-delay">Verspätung</span>
+    </div>
+
+    <main id="board" class="board-body" aria-live="polite">
+      <div class="board-status" id="boardStatus">Verbindung zur SBB&nbsp;Open&nbsp;Data&nbsp;API wird aufgebaut&hellip;</div>
+    </main>
+
+    <footer class="board-footer">
+      <span id="updatedAt">&nbsp;</span>
+      <span class="footer-sep">&middot;</span>
+      <span>Daten: <a href="https://transport.opendata.ch" target="_blank" rel="noopener">transport.opendata.ch</a> (SBB&nbsp;Open&nbsp;Data)</span>
+      <span class="footer-sep">&middot;</span>
+      <span>Auto&#8209;Update alle 30&nbsp;s</span>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="Schliessen">&times;</button>
+      <div class="modal-head">
+        <div class="modal-badge" id="modalBadge">S4</div>
+        <div>
+          <h2 id="modalTitle">Zug</h2>
+          <p id="modalSubtitle" class="modal-subtitle">Fahrplan</p>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <ol class="stop-list" id="stopList"></ol>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

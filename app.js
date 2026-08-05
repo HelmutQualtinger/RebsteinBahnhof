@@ -165,6 +165,23 @@ const netzplanBackdrop = document.getElementById('netzplanBackdrop');
 const netzplanClose = document.getElementById('netzplanClose');
 const netzplanWrap = document.getElementById('netzplanWrap');
 
+/* ---------- theme (dark/light) ---------- */
+
+const THEME_STORAGE_KEY = 'rebsteinBahnhof.theme';
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  themeToggleBtn.setAttribute('aria-pressed', String(theme === 'light'));
+}
+
+themeToggleBtn.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  applyTheme(current === 'light' ? 'dark' : 'light');
+});
+themeToggleBtn.setAttribute('aria-pressed', String(document.documentElement.getAttribute('data-theme') === 'light'));
+
 function findStation(id) {
   return STATIONS.find((s) => s.id === id) || STATIONS.find((s) => s.id === DEFAULT_STATION_ID);
 }

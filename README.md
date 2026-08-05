@@ -22,6 +22,8 @@ ohne eigenen Server oder Build-Schritt.
   Sekundenzeiger mit rotem "Kelle"-Punkt, sekundengenau
 - **Teilen-Buttons** (WhatsApp, X, Facebook, E-Mail) inkl. Open-Graph-Vorschaubild;
   der Link merkt sich den gewählten Bahnhof über `?station=<id>`
+- **Hell/Dunkel-Modus** per Knopf umschaltbar, merkt sich die Wahl; ohne Auswahl folgt es
+  den Systemeinstellungen
 - **In-Memory-Cache** pro Bahnhof/Tab, damit Umschalten ohne Nachladen sofort reagiert
 - Läuft komplett im Browser: keine Buildpipeline, kein Backend, kein API-Key
 

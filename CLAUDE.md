@@ -94,6 +94,27 @@ has a CSS `transition` for the snap-motion easing; the browser transitions the S
 plumbing). If you change hand shapes, coordinates are defined in a local space where
 `(0,0)` is the pivot and `-y` points toward 12 o'clock.
 
+### Dark/light theme
+
+Theme is a `data-theme="dark"|"light"` attribute on `<html>`, driven entirely by CSS
+custom properties (`:root` holds the dark values — the original/default look —
+`:root[data-theme="light"]` overrides them). Surface colors, text colors, and the
+various hairline border/overlay alphas all route through variables for this reason;
+avoid reintroducing hardcoded `rgba(255,255,255,…)`/`#fff`-ish borders or text colors in
+new CSS, or they'll look wrong (or invisible) in one of the two themes. A few things are
+deliberately *not* themed: the `--groove` digital-clock background stays near-black in
+both modes (it's meant to read as a physical LED-display housing regardless of ambient
+theme), and the analog clock face colors (`#fdfdfb` face, `#14150f` hands) — it's a
+physical object, not UI chrome.
+
+To avoid a flash of the wrong theme on load, an inline `<script>` at the very top of
+`<head>` (before the stylesheet `<link>`) reads `localStorage`/`matchMedia` synchronously
+and sets the attribute before first paint; `app.js`'s `applyTheme()` only handles the
+toggle button click and persists the choice back to `localStorage`
+(`rebsteinBahnhof.theme`). If no stored preference exists, it falls back to
+`prefers-color-scheme` rather than hardcoding dark, but that fallback isn't re-checked
+live — once the user picks explicitly, it sticks regardless of later OS theme changes.
+
 ### Netzplan (schematic network map)
 
 A "Netzplan" button in the header opens a modal (`#netzplanBackdrop`, styled via

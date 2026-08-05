@@ -66,6 +66,16 @@
             <span class="station-picker-label">Bahnhof (Kt.&nbsp;SG)</span>
             <select id="stationSelect" aria-label="Bahnhof wählen"></select>
           </label>
+          <button id="netzplanBtn" class="netzplan-btn" type="button" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M5 18 11 8l5 6 3-7" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="5" cy="18" r="1.9" fill="currentColor" stroke="none"/>
+              <circle cx="11" cy="8" r="1.9" fill="currentColor" stroke="none"/>
+              <circle cx="16" cy="14" r="1.9" fill="currentColor" stroke="none"/>
+              <circle cx="19" cy="7" r="1.9" fill="currentColor" stroke="none"/>
+            </svg>
+            <span>Netzplan</span>
+          </button>
         </div>
       </div>
 
@@ -115,6 +125,21 @@
         </a>
       </nav>
     </footer>
+  </div>
+
+  <div class="modal-backdrop" id="netzplanBackdrop">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="netzplanTitle">
+      <button class="modal-close" id="netzplanClose" aria-label="Schliessen">&times;</button>
+      <div class="modal-head">
+        <div>
+          <h2 id="netzplanTitle">Netzplan</h2>
+          <p class="modal-subtitle">Kanton St.&nbsp;Gallen &middot; Bahnhof anklicken zum Auswählen</p>
+        </div>
+      </div>
+      <div class="modal-body netzplan-body">
+        <div class="netzplan-wrap" id="netzplanWrap"></div>
+      </div>
+    </div>
   </div>
 
   <div class="modal-backdrop" id="modalBackdrop">

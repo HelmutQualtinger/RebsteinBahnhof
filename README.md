@@ -14,6 +14,9 @@ ohne eigenen Server oder Build-Schritt.
 - **Bahnhofsauswahl** per Dropdown aus allen 68 Zughalten im Kanton St. Gallen
   (Rheintal, Toggenburg, Fürstenland, Linthgebiet, Sarganserland, Zürichsee/Rapperswil,
   St. Gallen-Stadtnetz)
+- **Netzplan**: schematische Karte aller 68 Bahnhöfe im Kanton (echte Geokoordinaten,
+  entlang der tatsächlichen SBB-/AB-/SOB-Linien verbunden) — Bahnhof direkt anklicken
+  statt im Dropdown suchen
 - **Fahrplan pro Zug**: Klick auf eine Zeile zeigt alle folgenden Halte mit Zeiten
 - **SBB-Bahnhofsuhr** im Original-Design von Hans Hilfiker (1944), als SVG nachgebaut,
   Sekundenzeiger mit rotem "Kelle"-Punkt, sekundengenau

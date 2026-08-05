@@ -94,6 +94,60 @@ has a CSS `transition` for the snap-motion easing; the browser transitions the S
 plumbing). If you change hand shapes, coordinates are defined in a local space where
 `(0,0)` is the pivot and `-y` points toward 12 o'clock.
 
+### Netzplan (schematic network map)
+
+A "Netzplan" button in the header opens a modal (`#netzplanBackdrop`, styled via
+`.modal-wide`) containing an inline SVG schematic map of all 68 stations, generated at
+runtime from static data in `app.js`: `STATION_MAP_POS` (id → `[x, y]` in a fixed
+`0 0 640 620` viewBox) and `NETZPLAN_LINES` (ordered id arrays per real corridor —
+Rheintal, Bodensee, Walensee, Linthgebiet, Toggenburg, St.Gallen–Wil mainline, etc. —
+each tagged with a colour key resolved to the existing `--sbb-red`/`--blue-line`/
+`--green-line`/`--violet-line`/`--amber` CSS vars). Clicking a station node calls the
+same `selectStation()` used by the `<select>` dropdown and closes the modal; the
+dropdown and map stay in sync in both directions.
+
+**Coordinates are a one-off offline pipeline, not hand-typed** (same spirit as the
+`STATIONS` list itself): real WGS84 coordinates were fetched per station from the
+`/locations` endpoint, projected with a local equirectangular projection (longitude
+scaled by `cos(latMid)` so the shape isn't distorted), then two fixes were applied
+before baking the final numbers into `STATION_MAP_POS`:
+- **Cluster decluttering**: real-world station density varies wildly — the St. Gallen
+  city halts (Marktplatz, Spisertor, Schülerhaus, …) and the Rapperswil-area stops
+  (Kempraten, Jona, Blumenau) sit within a few hundred metres of their hub in reality,
+  which collapses to just a few pixels at canton scale. Those groups are respaced along
+  their true bearing from the hub at a fixed schematic radius (direction preserved,
+  literal distance not) rather than left at their true-projected position.
+- **Minimum-spacing relaxation**: after decluttering, an iterative pass still nudges any
+  remaining pair of stations closer than 13px apart away from each other along their
+  connecting axis. This isn't cosmetic — the map's clickable hit area per station is a
+  larger invisible circle (`.netzplan-hit`, r=6) layered under the visible dot precisely
+  so touch/click targets stay reasonable at this scale, and anything tighter than ~2×
+  that radius makes neighboring stations steal each other's clicks.
+- If this data ever needs regenerating (station list changes, a coordinate looks wrong),
+  redo this pipeline — there's no source script committed, it was a one-off analysis
+  (verified with a throwaway Playwright screenshot script, not committed either).
+
+**Label legibility**: permanently labelling all 68 stations is illegible at this scale,
+so only a curated set of interchange hubs (`NETZPLAN_HUB_IDS`) get an always-on label;
+the rest reveal their name via CSS `:hover`/`:focus-visible` on the station's `<g>`
+(`.netzplan-label.is-hover-only`). Stations past `x > 560` (near the right edge of the
+viewBox) flip their label to `text-anchor: end` on the left side of the dot instead —
+otherwise long names like "St. Margrethen SG" get clipped by the SVG viewport.
+
+**SVG hit-testing gotcha worth remembering**: the invisible larger click-target circle
+(`.netzplan-hit`) has `fill: transparent`, and SVG's default `pointer-events:
+visiblePainted` means a transparent-filled shape does **not** receive pointer events at
+all — clicks fall through to whatever's underneath (in this case the corridor
+`<polyline>` stroke passing directly through the node, since every station is a vertex
+on its line). The fix is `pointer-events: all` on `.netzplan-hit` in `style.css`; without
+it every station whose hit-circle overlaps a line segment becomes unclickable via mouse
+(keyboard `Enter`/`Space` still worked, since that path doesn't go through hit-testing).
+
+On mobile the SVG scales to the container width with no forced `min-width` — the whole
+network is visible at once (for orientation) rather than requiring horizontal scroll to
+find a station; precise tapping of tightly-clustered stations relies on the browser's
+native pinch-zoom (the viewport meta tag doesn't disable it).
+
 ### Sharing / Open Graph
 
 Share buttons (WhatsApp/X/Facebook/mail) in the footer build their `href` dynamically

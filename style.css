@@ -185,6 +185,31 @@ body {
   color: var(--ink);
 }
 
+.netzplan-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: 'Archivo', sans-serif;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  background: var(--board-panel);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 6px;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.netzplan-btn svg { width: 1.05rem; height: 1.05rem; flex-shrink: 0; }
+
+.netzplan-btn:hover,
+.netzplan-btn:focus-visible {
+  color: var(--ink);
+  border-color: var(--sbb-red);
+  outline: none;
+}
+
 .tabs {
   display: flex;
   gap: 0.5rem;
@@ -562,6 +587,106 @@ body {
   font-size: 0.85rem;
   padding: 1rem 0;
   text-align: center;
+}
+
+/* ---------- Netzplan (schematic network map) ---------- */
+
+.modal-wide {
+  max-width: 720px;
+}
+
+.netzplan-body {
+  padding: 0;
+}
+
+.netzplan-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.netzplan-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.netzplan-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+
+.netzplan-line.line-sbb-red { stroke: var(--sbb-red); }
+.netzplan-line.line-blue-line { stroke: var(--blue-line); }
+.netzplan-line.line-green-line { stroke: var(--green-line); }
+.netzplan-line.line-violet-line { stroke: var(--violet-line); }
+.netzplan-line.line-amber { stroke: var(--amber); }
+.netzplan-line.line-ink-dim { stroke: var(--ink-dim); }
+
+.netzplan-station { cursor: pointer; outline: none; }
+
+.netzplan-hit { fill: transparent; pointer-events: all; }
+
+.netzplan-line { pointer-events: none; }
+
+.netzplan-dot {
+  fill: var(--board-panel-raised);
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  transition: r 0.12s ease, fill 0.12s ease, stroke 0.12s ease;
+}
+
+.netzplan-station.is-hub .netzplan-dot {
+  stroke-width: 1.8;
+}
+
+.netzplan-label {
+  font-family: 'Archivo', sans-serif;
+  font-size: 8.5px;
+  fill: var(--ink-dim);
+  pointer-events: none;
+}
+
+.netzplan-label.is-hub {
+  font-weight: 700;
+  fill: var(--ink);
+  font-size: 9.5px;
+}
+
+.netzplan-label.is-hover-only {
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.netzplan-station:hover .netzplan-dot,
+.netzplan-station:focus-visible .netzplan-dot {
+  fill: var(--sbb-red);
+  stroke: var(--sbb-red);
+  r: 5.5;
+}
+
+.netzplan-station:hover .netzplan-label,
+.netzplan-station:focus-visible .netzplan-label {
+  opacity: 1;
+  fill: var(--ink);
+  font-weight: 700;
+}
+
+.netzplan-station.is-selected .netzplan-dot {
+  fill: var(--amber);
+  stroke: var(--amber);
+}
+
+.netzplan-station.is-selected .netzplan-label {
+  opacity: 1;
+  fill: var(--amber);
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .netzplan-btn span { display: none; }
 }
 
 /* ---------- Responsive ---------- */

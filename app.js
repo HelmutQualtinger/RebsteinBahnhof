@@ -146,6 +146,12 @@ const updatedAtEl = document.getElementById('updatedAt');
 const tabs = [...document.querySelectorAll('.tab')];
 const stationSelectEl = document.getElementById('stationSelect');
 const stationNameEl = document.getElementById('stationName');
+const shareLinks = {
+  whatsapp: document.getElementById('shareWhatsapp'),
+  x: document.getElementById('shareX'),
+  facebook: document.getElementById('shareFacebook'),
+  mail: document.getElementById('shareMail'),
+};
 
 const modalBackdrop = document.getElementById('modalBackdrop');
 const modalClose = document.getElementById('modalClose');
@@ -163,7 +169,26 @@ function findStation(id) {
   return STATIONS.find((s) => s.id === id) || STATIONS.find((s) => s.id === DEFAULT_STATION_ID);
 }
 
-let currentStation = findStation(localStorage.getItem(STATION_STORAGE_KEY) || DEFAULT_STATION_ID);
+function shareUrlFor(stationId) {
+  const url = new URL(location.href);
+  url.search = '';
+  url.searchParams.set('station', stationId);
+  return url.toString();
+}
+
+function updateShareLinks() {
+  const url = shareUrlFor(currentStation.id);
+  const text = `${currentStation.name} – Live Bahnhoftafel`;
+  shareLinks.whatsapp.href = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
+  shareLinks.x.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  shareLinks.facebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  shareLinks.mail.href = `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`;
+}
+
+const initialStationId = new URLSearchParams(location.search).get('station')
+  || localStorage.getItem(STATION_STORAGE_KEY)
+  || DEFAULT_STATION_ID;
+let currentStation = findStation(initialStationId);
 let currentMode = 'departure';
 let currentEntries = [];
 let refreshTimer = null;
@@ -257,6 +282,17 @@ function toApiDatetime(date) {
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
+// Midnight of the Zurich calendar day *after* the given instant, as an API datetime
+// string. Adding a full 24h before reading the calendar day guarantees we land on
+// "tomorrow" regardless of how close `afterDate` already is to midnight.
+function nextZurichMidnight(afterDate) {
+  const shifted = new Date(afterDate.getTime() + 24 * 3600 * 1000);
+  const parts = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(shifted).reduce((acc, p) => (acc[p.type] = p.value, acc), {});
+  return `${parts.year}-${parts.month}-${parts.day} 00:00`;
+}
+
 async function loadBoard(stationId, mode) {
   const now = new Date();
   const horizonTs = now.getTime() + HORIZON_HOURS * 3600 * 1000;
@@ -265,12 +301,14 @@ async function loadBoard(stationId, mode) {
   const collected = [];
   let cursor = undefined;
   let guard = 0;
+  let activeMode = mode;
 
-  while (guard++ < 6) {
-    const page = await fetchPage(stationId, mode, cursor);
+  while (guard++ < 8) {
+    const page = await fetchPage(stationId, activeMode, cursor);
     if (page.length === 0) break;
 
     let reachedHorizon = false;
+    let addedAny = false;
     for (const entry of page) {
       const ts = entry.stop.departureTimestamp || entry.stop.arrivalTimestamp;
       if (!ts) continue;
@@ -279,13 +317,28 @@ async function loadBoard(stationId, mode) {
       if (ts * 1000 > horizonTs) { reachedHorizon = true; break; }
       seen.add(key);
       collected.push(entry);
+      addedAny = true;
     }
 
     const last = page[page.length - 1];
     const lastTs = last.stop.departureTimestamp || last.stop.arrivalTimestamp;
     if (reachedHorizon || !lastTs || lastTs * 1000 > horizonTs) break;
 
-    cursor = toApiDatetime(new Date(lastTs * 1000 + 60000));
+    if (addedAny) {
+      cursor = toApiDatetime(new Date(lastTs * 1000 + 60000));
+    } else if (activeMode === 'arrival') {
+      // The API's arrival board doesn't roll over the "operating day" on its own —
+      // near midnight it keeps returning the same last entry no matter how far the
+      // cursor is nudged forward, and querying it for a later calendar day just
+      // jumps to that day's very last entry instead of the next chronological one.
+      // Once it stalls, fall back to the departure board for the remainder of the
+      // horizon: for a through-station the two share the same single timestamp
+      // anyway (see CLAUDE.md), and departure reliably paginates across midnight.
+      activeMode = 'departure';
+      cursor = nextZurichMidnight(new Date(lastTs * 1000));
+    } else {
+      break; // departure stalled too — nothing more to fetch
+    }
   }
 
   collected.sort((a, b) => {
@@ -527,8 +580,10 @@ function selectTab(mode) {
 function selectStation(stationId) {
   currentStation = findStation(stationId);
   localStorage.setItem(STATION_STORAGE_KEY, currentStation.id);
+  history.replaceState({}, '', shareUrlFor(currentStation.id));
   stationNameEl.textContent = currentStation.name;
   document.title = `${currentStation.name} — Bahnhoftafel`;
+  updateShareLinks();
   stationSelectEl.value = currentStation.id;
   if (netzplanBuilt) highlightNetzplanSelection();
   selectTab(currentMode);
@@ -553,6 +608,8 @@ setInterval(tickClock, 1000);
 populateStationSelect();
 stationNameEl.textContent = currentStation.name;
 document.title = `${currentStation.name} — Bahnhoftafel`;
+history.replaceState({}, '', shareUrlFor(currentStation.id));
+updateShareLinks();
 
 selectTab('departure');
 refreshTimer = setInterval(() => refresh(currentStation.id, currentMode, { silent: true }), REFRESH_MS);

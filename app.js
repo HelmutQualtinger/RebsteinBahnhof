@@ -536,7 +536,23 @@ function openModal(entry) {
   origin.innerHTML = `<span class="stop-name">${currentStation.name}</span><span class="stop-time">${hhmm(s.departure || s.arrival)}</span>`;
   stopList.appendChild(origin);
 
-  const stops = (entry.passList || []).filter((p) => p.station && p.station.name);
+  const rawStops = (entry.passList || []).filter((p) => p.station && p.station.name);
+
+  // Some passList responses run past this trip's real end and chain on a completely
+  // unrelated subsequent working of the same physical vehicle (a different service,
+  // sometimes hours earlier in the day) — visible as the displayed time suddenly
+  // jumping backwards. Truncate at the first such anomaly rather than show impossible
+  // (time-travelling) stops; entries with no time at all (request stops) pass through
+  // without resetting the reference time, since we can't tell if they're the problem.
+  let lastTs = new Date(s.departure || s.arrival).getTime();
+  const stops = [];
+  for (const p of rawStops) {
+    const time = p.arrival || p.departure;
+    const ts = time ? new Date(time).getTime() : null;
+    if (ts !== null && ts < lastTs) break;
+    if (ts !== null) lastTs = ts;
+    stops.push(p);
+  }
 
   if (stops.length === 0) {
     stopList.innerHTML += `<li class="stop-loading">Keine weiteren Halte in den Fahrplandaten.</li>`;

@@ -125,7 +125,7 @@ body {
 
 .sbb-clock #handSecond line {
   stroke: var(--sbb-red);
-  stroke-width: 1.1;
+  stroke-width: 1.5;
 }
 
 .sbb-clock #handSecond circle {

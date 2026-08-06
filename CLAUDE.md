@@ -29,10 +29,22 @@ scripts against `playwright` if you need to verify UI behavior.
 
 ## Deployment
 
-GitHub Pages serves directly from the `main` branch root (no Actions workflow — Pages
-"legacy" build). Pushing to `main` is the deploy: `git push` → GitHub rebuilds Pages
-automatically within roughly a minute. Repo: `HelmutQualtinger/RebsteinBahnhof`, live at
+GitHub Pages serves directly from the **`Live`** branch root (no Actions workflow —
+Pages "legacy" build). Pushing to `Live` is the deploy: `git push origin Live` → GitHub
+rebuilds Pages automatically, though it can take a couple of minutes rather than the
+"roughly a minute" one might expect — confirm with
+`gh api repos/HelmutQualtinger/RebsteinBahnhof/pages/builds/latest --jq '.status, .commit'`
+if in doubt. Repo: `HelmutQualtinger/RebsteinBahnhof`, live at
 `https://helmutqualtinger.github.io/RebsteinBahnhof/`.
+
+**`main` is the repo's default branch but is *not* what's deployed.** `Live` was
+branched off `main` and is currently a clean fast-forward ahead of it — treat `main` and
+`Live` as needing to be kept in sync manually (fast-forward-merge `Live` into `main`, or
+just develop directly on `Live`) rather than assuming a push to one reaches the other.
+If a push to `main` doesn't seem to show up on the live site, check
+`gh api repos/HelmutQualtinger/RebsteinBahnhof/pages --jq '.source'` to confirm which
+branch Pages is actually configured to serve before assuming a build failure — the
+source branch can be changed independently of the default branch.
 
 ## Architecture
 

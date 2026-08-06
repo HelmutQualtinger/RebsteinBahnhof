@@ -24,6 +24,8 @@ ohne eigenen Server oder Build-Schritt.
   der Link merkt sich den gewählten Bahnhof über `?station=<id>`
 - **Hell/Dunkel-Modus** per Knopf umschaltbar, merkt sich die Wahl; ohne Auswahl folgt es
   den Systemeinstellungen
+- **Orts-Banner**: Live-Foto der gewählten Ortschaft direkt über dem Fahrplan, aus
+  Wikipedia geladen
 - **In-Memory-Cache** pro Bahnhof/Tab, damit Umschalten ohne Nachladen sofort reagiert
 - Läuft komplett im Browser: keine Buildpipeline, kein Backend, kein API-Key
 

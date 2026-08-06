@@ -248,6 +248,44 @@ body {
 :root[data-theme="light"] .theme-toggle-btn .icon-moon,
 :root[data-theme="light"] .theme-toggle-btn .theme-label-dark { display: none; }
 
+.locality-banner {
+  margin-top: 1.4rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: var(--board-panel);
+}
+
+.locality-banner a { display: block; position: relative; }
+
+.locality-banner img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3.6 / 1;
+  object-fit: cover;
+  background: var(--board-panel);
+}
+
+.locality-banner-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.2rem 1rem 0.55rem;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.72));
+  color: #fff;
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 1.05rem;
+}
+
+.locality-banner a:focus-visible {
+  outline: 2px solid var(--sbb-red);
+  outline-offset: -2px;
+}
+
 .tabs {
   display: flex;
   gap: 0.5rem;
@@ -736,4 +774,5 @@ body {
   .row { grid-template-columns: 3.6rem 3.4rem 1fr 2.6rem; }
   .row .delay { display: none; }
   .clock-digital { font-size: 1rem; padding: 0.4rem 0.6rem; }
+  .locality-banner img { aspect-ratio: 2.2 / 1; }
 }

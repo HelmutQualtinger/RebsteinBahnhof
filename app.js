@@ -82,6 +82,40 @@ const STATIONS = [
   { id: '8503225', name: 'Ziegelbrücke' },
 ];
 
+// German-Wikipedia article title per station, used to fetch a banner photo of the
+// corresponding locality. Manually curated (not derived from an API): most stations map
+// to their own town's article, but several map to a neighbouring town or the parent
+// municipality instead, because the station's own hamlet has no usable article/image on
+// de.wikipedia.org (verified individually against the REST summary endpoint — every title
+// below is confirmed to resolve to a non-disambiguation page with a thumbnail). If a
+// mapping ever starts rendering the wrong/no image, re-verify the title against
+// https://de.wikipedia.org/api/rest_v1/page/summary/<title> rather than guessing.
+const STATION_LOCALITY = {
+  '8506319': 'Altstätten', '8506211': 'Gossau SG', '8506316': 'Au SG',
+  '8509004': 'Bad Ragaz', '8506205': 'Bazenheid', '8503118': 'Benken SG',
+  '8503113': 'Rapperswil-Jona', '8506181': 'Bronschhofen', '8506188': 'Bronschhofen',
+  '8506294': 'Neckertal', '8509404': 'Buchs SG', '8506203': 'Bütschwil',
+  '8506292': 'Degersheim SG', '8506202': 'Dietfurt SG', '8506297': 'Ebnat-Kappel',
+  '8506209': 'Flawil', '8509413': 'Flums', '8506305': 'Goldach SG',
+  '8506210': 'Gossau SG', '8506317': 'Widnau', '8503120': 'Jona SG',
+  '8503117': 'Kaltbrunn SG', '8503112': 'Rapperswil-Jona', '8506298': 'Krummenau SG',
+  '8506201': 'Lichtensteig', '8506204': 'Lütisburg', '8509412': 'Mels',
+  '8506293': 'Mogelsberg', '8506396': 'Muolen', '8509417': 'Murg SG',
+  '8506304': 'Mörschwil', '8506299': 'Nesslau', '8509400': 'Oberriet',
+  '8503110': 'Rapperswil-Jona', '8506318': 'Rebstein', '8506313': 'Rheineck SG',
+  '8506311': 'Rorschach', '8506322': 'Rorschach', '8509405': 'Wartau',
+  '8509401': 'Rüthi', '8509402': 'Sennwald', '8509411': 'Sargans',
+  '8503115': 'Schmerikon', '8506362': 'St. Gallen', '8503119': 'Schänis',
+  '8509406': 'Sevelen SG', '8506302': 'St. Gallen', '8518100': 'St. Gallen',
+  '8506301': 'St. Gallen', '8519306': 'St. Gallen', '8506392': 'St. Gallen',
+  '8506270': 'St. Gallen', '8506361': 'St. Gallen', '8506371': 'St. Gallen',
+  '8506359': 'St. Gallen', '8506358': 'St. Gallen', '8506303': 'St. Gallen',
+  '8506300': 'St. Gallen', '8506314': 'St. Margrethen', '8506312': 'Rorschacherberg',
+  '8509416': 'Walenstadt', '8503116': 'Uznach', '8506208': 'Uzwil',
+  '8509414': 'Walenstadt', '8506200': 'Wattwil', '8506206': 'Wil SG',
+  '8506393': 'Wittenbach SG', '8503225': 'Ziegelbrücke (Schweiz)',
+};
+
 // Schematic-map coordinates for each station, projected once (offline) from real WGS84
 // coordinates (transport.opendata.ch /locations) into a 640x620 local viewBox via an
 // equirectangular projection centred on the canton. A few real-world clusters (St. Gallen
@@ -297,6 +331,69 @@ function toApiDatetime(date) {
     hour: '2-digit', minute: '2-digit', hour12: false
   }).formatToParts(date).reduce((acc, p) => (acc[p.type] = p.value, acc), {});
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+/* ---------- Locality banner (Wikipedia) ---------- */
+
+const localityBannerEl = document.getElementById('localityBanner');
+const localityBannerImg = document.getElementById('localityBannerImg');
+const localityBannerCaption = document.getElementById('localityBannerCaption');
+const localityBannerLink = document.getElementById('localityBannerLink');
+
+// Keyed by Wikipedia title (not station id) so the ~15 stations that share a locality
+// (e.g. every St. Gallen city stop) only fetch it once.
+const localityCache = new Map();
+let localityRequestId = 0;
+
+async function fetchLocalityBanner(title) {
+  if (localityCache.has(title)) return localityCache.get(title);
+  const promise = (async () => {
+    try {
+      const res = await fetch(`https://de.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.thumbnail || data.type === 'disambiguation') return null;
+      return {
+        // The REST summary thumbnail defaults to a small (~320px) render. Wikimedia's
+        // thumb service only serves a fixed allow-list of widths for direct/hotlinked
+        // requests (20/40/60/120/250/330/500/960/1280/1920/3840px) — anything else
+        // 400s with an HTML error body, which Chrome then blocks as an opaque
+        // cross-origin response (ERR_BLOCKED_BY_ORB) instead of just failing the
+        // <img> load. 960px is the closest standard size to this banner's display
+        // width. `thumbSrc` (the API's own default size) is kept as a guaranteed-good
+        // fallback in case a given source photo is too small for the 960 bucket.
+        imageUrl: data.thumbnail.source.replace(/\/\d+px-/, '/960px-'),
+        thumbSrc: data.thumbnail.source,
+        pageUrl: data.content_urls?.desktop?.page || `https://de.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+      };
+    } catch {
+      return null;
+    }
+  })();
+  localityCache.set(title, promise);
+  return promise;
+}
+
+async function updateLocalityBanner() {
+  const myRequestId = ++localityRequestId;
+  const title = STATION_LOCALITY[currentStation.id];
+  localityBannerEl.hidden = true;
+  if (!title) return;
+  const info = await fetchLocalityBanner(title);
+  if (myRequestId !== localityRequestId) return; // a newer station was selected meanwhile
+  if (!info) return;
+  localityBannerImg.onerror = () => {
+    localityBannerImg.onerror = null;
+    localityBannerImg.src = info.thumbSrc; // 960px bucket didn't exist for this photo — use the API's own default size
+  };
+  // Strip a trailing Wikipedia disambiguation parenthetical (e.g. "Ziegelbrücke (Schweiz)")
+  // for display; the full title is still what's used to query/cache/link.
+  const displayTitle = title.replace(/\s*\([^)]*\)\s*$/, '');
+  localityBannerImg.src = info.imageUrl;
+  localityBannerImg.alt = displayTitle;
+  localityBannerCaption.textContent = displayTitle;
+  localityBannerLink.href = info.pageUrl;
+  localityBannerEl.hidden = false;
 }
 
 // Midnight of the Zurich calendar day *after* the given instant, as an API datetime
@@ -603,6 +700,7 @@ function selectStation(stationId) {
   updateShareLinks();
   stationSelectEl.value = currentStation.id;
   if (netzplanBuilt) highlightNetzplanSelection();
+  updateLocalityBanner();
   selectTab(currentMode);
 }
 
@@ -627,6 +725,7 @@ stationNameEl.textContent = currentStation.name;
 document.title = `${currentStation.name} — Bahnhoftafel`;
 history.replaceState({}, '', shareUrlFor(currentStation.id));
 updateShareLinks();
+updateLocalityBanner();
 
 selectTab('departure');
 refreshTimer = setInterval(() => refresh(currentStation.id, currentMode, { silent: true }), REFRESH_MS);

@@ -115,6 +115,39 @@ toggle button click and persists the choice back to `localStorage`
 `prefers-color-scheme` rather than hardcoding dark, but that fallback isn't re-checked
 live — once the user picks explicitly, it sticks regardless of later OS theme changes.
 
+### Locality banner (Wikipedia)
+
+A banner image of the selected station's town sits between the header and the tabs
+(`#localityBanner`), sourced live from the German Wikipedia REST summary endpoint
+(`https://de.wikipedia.org/api/rest_v1/page/summary/<title>` — public, CORS-open, no key,
+same pattern as the transport.opendata.ch calls elsewhere in this app).
+
+`STATION_LOCALITY` (id → Wikipedia article title) is a **manually curated** map, not
+generated — most stations map to their own town's article, but several map to a
+neighbouring town or the parent municipality (e.g. `Kempraten`/`Blumenau`/`Jona` all map
+to `Rapperswil-Jona`; `Arnegg` → `Gossau SG`; every `St. Gallen *` city stop → `St. Gallen`)
+because the station's own hamlet has no usable article/image on de.wikipedia.org. Every
+title in the map was individually verified against the REST endpoint to resolve to a
+non-disambiguation page with a thumbnail before being added. If a mapping ever starts
+showing the wrong/no image, re-verify the title the same way rather than guessing a fix.
+
+**Wikimedia thumbnail width gotcha**: the REST summary's default thumbnail is small
+(~320px). Wikimedia's image thumbnailing service now only serves a fixed allow-list of
+widths for direct/hotlinked requests — `20/40/60/120/250/330/500/960/1280/1920/3840px` —
+introduced to prevent thumbnail-parameter abuse (see `https://w.wiki/GHai`, "Common
+thumbnail sizes"). Requesting any other width (e.g. the previously-tried `1000px`) 400s
+with an **HTML** error body, and Chrome blocks that as an opaque cross-origin response
+(`ERR_BLOCKED_BY_ORB`) rather than just failing the `<img>` load — it looked like a CORS
+problem but wasn't. `fetchLocalityBanner()` requests the `960px` bucket (closest to the
+banner's display width) and falls back to the guaranteed-good default `thumbnail.source`
+via the `<img>`'s `onerror` handler if a given source photo is smaller than that bucket.
+
+Requests are cached in `localityCache` keyed by **title**, not station id, so the many
+stations sharing a locality only fetch once. `updateLocalityBanner()` guards against
+race conditions from rapid station switching with a monotonic `localityRequestId`
+(same pattern as `refresh()`'s stale-write guard) — without it, switching stations
+quickly could let an earlier, slower fetch overwrite a later, faster one.
+
 ### Netzplan (schematic network map)
 
 A "Netzplan" button in the header opens a modal (`#netzplanBackdrop`, styled via

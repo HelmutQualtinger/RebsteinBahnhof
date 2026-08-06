@@ -92,8 +92,8 @@ body {
 }
 
 .sbb-clock {
-  width: 56px;
-  height: 56px;
+  width: clamp(64px, 9vw, 88px);
+  height: clamp(64px, 9vw, 88px);
   flex-shrink: 0;
   border-radius: 50%;
   filter: drop-shadow(0 4px 14px rgba(0,0,0,0.55));
